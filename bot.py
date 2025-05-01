@@ -1,10 +1,8 @@
 import logging
 import asyncio
 import aiohttp
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
-import os
-import nest_asyncio
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # Enable logging
 logging.basicConfig(
@@ -71,17 +69,16 @@ async def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("alert", alert))
 
-    async def post_init():
+    # Start background task after app is running
+    async def startup():
         asyncio.create_task(monitor_alerts(app))
 
+    app.post_init = startup
     print("Bot is running...")
-    await app.initialize()
-    await post_init()
-    await app.start()
-    await app.updater.start_polling()
-    await app.updater.idle()
+    await app.run_polling()
 
 if __name__ == '__main__':
+    import nest_asyncio
     nest_asyncio.apply()
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    asyncio.get_event_loop().run_until_complete(main())
+
